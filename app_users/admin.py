@@ -3,13 +3,13 @@ from .models import CustomUser, EmailConfirmationCode, Account, Category, Transa
 
 
 
-# @admin.register(CustomUser)
+admin.site.register(CustomUser)
 # class UserAdmin()
 
 
 @admin.register(EmailConfirmationCode)
 class EmailConfirmationCodeAdmin(admin.ModelAdmin):
-    list_display = ('user', 'code', 'created_at', 'expires_at')
+    list_display = ('user', 'code', 'created_at', 'expired_at')
     search_fields = ('user__username', 'user__username', 'code', 'created_at', 'expired_at')
 
 

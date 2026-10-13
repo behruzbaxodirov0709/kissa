@@ -2,16 +2,19 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 import datetime 
 from django.utils import timezone
-from rest_framework import settings
+from django.conf import settings
 
 
 
 class CustomUser(AbstractUser):
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
     LANGUAGE_CHOICES = (
         ('uz', 'Uzbek'),
         ('ru', 'Russian'),
         ('en', 'English'),
     )
+    
 
     email = models.EmailField(unique=True)
     is_verified = models.BooleanField(default=False)
@@ -25,15 +28,16 @@ class CustomUser(AbstractUser):
 class EmailConfirmationCode(models.Model):
     user = models.ForeignKey(to=CustomUser, on_delete=models.CASCADE, related_name="confirmation_codes")
     code = models.CharField(max_length=6)
+    is_used = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    expired_at = models.DateTimeField()
+    expired_at = models.DateTimeField(blank=True, null=True)
 
     def save(self, *args, **kwargs):
         if not self.expired_at:
-            self.expired_at = self.created_at + datetime.timedelta(minutes=settings.EMAIL_EXPIRATION_TIME)
+            now = timezone.now()
+            self.expired_at = now + datetime.timedelta(minutes=settings.EMAIL_EXPIRATION_TIME)
         return super().save(*args, **kwargs)
 
-    
     def is_valid(self):
         return timezone.now() <= self.expired_at
 
@@ -81,7 +85,7 @@ class Transactions(models.Model):
     category = models.ForeignKey(to=Category, on_delete=models.CASCADE, related_name="transactions")
     type = models.CharField(max_length=10, choices=TRANSACTION_TYPES)
     amount = models.DecimalField(max_digits=15, decimal_places=2)
-    date = models.DateField(default=timezone.now())
+    date = models.DateField(default=timezone.now)
     description = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
