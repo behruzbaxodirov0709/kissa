@@ -3,8 +3,14 @@ from .models import CustomUser, EmailConfirmationCode, Account, Category, Transa
 
 
 
-admin.site.register(CustomUser)
-# class UserAdmin()
+@admin.register(CustomUser)
+class CustomUserAdmin(admin.ModelAdmin):
+    list_display = ('email', 'username', 'is_verified')
+    list_display_links = ('email', 'username', 'is_verified')
+    list_filter = ('email', 'username', 'is_verified')
+    search_fields = ('email', 'username')
+    search_help_text = ('email', 'username')
+
 
 
 @admin.register(EmailConfirmationCode)

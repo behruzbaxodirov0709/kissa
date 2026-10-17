@@ -127,7 +127,7 @@ MAILERS = {
 }
 
 DEFAULT_FROM_EMAIL = "Kissa <bekzodovich0709@gmail.com>"
-EMAIL_EXPIRATION_TIME = 5
+EMAIL_EXPIRATION_TIME = 2
 AUTH_USER_MODEL = 'app_users.CustomUser'
 
 

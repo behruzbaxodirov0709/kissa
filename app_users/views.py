@@ -1,14 +1,20 @@
 from django.shortcuts import render
 from rest_framework.response import Response
+from django.core.mail import send_mail  
+from django.conf import settings
 from rest_framework import status
 from rest_framework.views import APIView
 from .models import CustomUser, EmailConfirmationCode
-from .serializers import RegisterSerializer, VerifyOTPSerializer
+from . import serializers
+import random
+
+
+
 
 
 class RegisterView(APIView):
-    def patch(self, request):
-        serializer = RegisterSerializer(data=request.data, partial=True)
+    def post(self, request):
+        serializer = serializers.RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -21,9 +27,23 @@ class RegisterView(APIView):
         )
 
 
+class LoginView(APIView):
+    def post(self, request):
+        serializer = serializers.LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(
+            data={
+                "message":"Login muvaffaqiyatli amalga oshirildi"
+            },
+            status=status.HTTP_200_OK
+        )
+    
+
 class VerifyOTPView(APIView):
     def post(self, request):
-        serializer = VerifyOTPSerializer(data=request.data)
+        serializer = serializers.VerifyOTPSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
         last_send_code = serializer.validated_data["last_send_code"]
@@ -39,3 +59,33 @@ class VerifyOTPView(APIView):
             },
             status=status.HTTP_200_OK
             )
+
+
+class ResendOTPView(APIView):
+    def post(self, request):
+        serializer = serializers.ResendOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        user = CustomUser.objects.get(email=email)
+        last_send_code = EmailConfirmationCode.objects.filter(user=user, code=code, is_used=False).last()
+        last_send_code.is_used = True
+        last_send_code.save()      
+        d          
+        code =str(random.randint(100000, 999999))
+
+        EmailConfirmationCode.objects.create(user=user, code=code)
+
+        send_mail(
+            subject="Kissa — Yangi tasdiqlash kodi",
+            message=f"Sizning yangi tasdiqlash kodingiz: {code}",
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'bekzodovich0709@gmail.com'),
+            recipient_list=[user.email],
+            fail_silently=False
+        )
+
+        return Response(
+            data={
+                "message":"Yangi tasdiqlash kodi emailga yuborildi."
+            },
+            status=status.HTTP_200_OK
+        )

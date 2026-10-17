@@ -35,11 +35,12 @@ class EmailConfirmationCode(models.Model):
     def save(self, *args, **kwargs):
         if not self.expired_at:
             now = timezone.now()
-            self.expired_at = now + datetime.timedelta(minutes=settings.EMAIL_EXPIRATION_TIME)
+            expiration_minutes = getattr(settings, 'EMAIL_EXPIRATION_TIME', 2)
+            self.expired_at = now + datetime.timedelta(minutes=expiration_minutes)
         return super().save(*args, **kwargs)
 
     def is_valid(self):
-        return timezone.now() <= self.expired_at
+        return timezone.now() <= self.expired_at and not self.is_used
 
 
 class Account(models.Model):
@@ -71,7 +72,7 @@ class Category(models.Model):
     type = models.CharField(max_length=10, choices=CATEGORY_TYPES)
 
     def __str__(self):
-        return f"{self.user.username} - ({self.type})"
+        return f"{self.user.username} - {self.name} - {self.type}"
 
 
 class Transactions(models.Model):
