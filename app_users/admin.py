@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CustomUser, EmailConfirmationCode, Account, Category, Transactions
+from .models import CustomUser, EmailConfirmationCode, Account, Category, Transaction
 
 
 
@@ -33,7 +33,7 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ('name', 'user__email', 'user__username')
 
 
-@admin.register(Transactions)
+@admin.register(Transaction)
 class TransactionsAdmin(admin.ModelAdmin):
     list_display = ('user', 'account', 'category', 'type', 'amount', 'date', 'created_at')
     list_filter = ('type', 'date')

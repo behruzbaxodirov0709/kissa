@@ -75,7 +75,7 @@ class Category(models.Model):
         return f"{self.user.username} - {self.name} - {self.type}"
 
 
-class Transactions(models.Model):
+class Transaction(models.Model):
     TRANSACTION_TYPES = (
             ('income', 'kirim'),
             ('expense', 'chiqim'),

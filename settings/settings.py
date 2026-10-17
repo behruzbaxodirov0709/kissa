@@ -126,8 +126,26 @@ MAILERS = {
     }
 }
 
+
 DEFAULT_FROM_EMAIL = "Kissa <bekzodovich0709@gmail.com>"
 EMAIL_EXPIRATION_TIME = 2
 AUTH_USER_MODEL = 'app_users.CustomUser'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES':(
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
+
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5), 
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=1), 
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACK_LIST_AFTER_ROTATION': True,
+}
+
 
 
