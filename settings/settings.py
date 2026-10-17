@@ -30,6 +30,10 @@ INSTALLED_APPS = [
 
     'app_users',
     'rest_framework',
+    'drf_spectacular',
+    "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
+    "django_filters"
 ]
 
 MIDDLEWARE = [
@@ -135,7 +139,8 @@ AUTH_USER_MODEL = 'app_users.CustomUser'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES':(
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema'
 }
 
 from datetime import timedelta
@@ -148,4 +153,15 @@ SIMPLE_JWT = {
 }
 
 
-
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Kissa — Shaxsiy Moliya API',
+    'DESCRIPTION': 'Kissa ilovasi uchun hisoblar, kategoriyalar va tranzaksiyalarni boshqarish bo\'yicha to\'liq API hujjatlari.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+    },
+}

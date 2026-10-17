@@ -7,7 +7,9 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import CustomUser, EmailConfirmationCode, Account, Category, Transaction
 from . import serializers
+from .pagination import CustomPageNumberPagination
 import random
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 
 
 def get_tokens_for_user(user):
@@ -204,13 +206,47 @@ class CategoryDeleteAPIView(APIView):
         return Response({"message": "Kategoriya o'chirildi"}, status=status.HTTP_204_NO_CONTENT)
 
 
-
+@extend_schema(
+    tags=['Transactions'],
+    summary="Tranzaksiyalar ro'yxatini olish",
+    description="Foydalanuvchining barcha kirim va chiqimlarini filter va pagination bilan olish.",
+    parameters=[
+        OpenApiParameter(name='type', description="income yoki expense bo'yicha filter", required=False, type=str),
+        OpenApiParameter(name='start_date', description="Boshlanish sanasi (YYYY-MM-DD)", required=False, type=str),
+        OpenApiParameter(name='end_date', description="Tugash sanasi (YYYY-MM-DD)", required=False, type=str),
+    ]
+)
 class TransactionListAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
         transactions = Transaction.objects.filter(user=request.user).order_by('-created_at')
-        serializer = serializers.TransactionSerializer(transactions, many=True)
+
+        type_param = request.query_params.get('type')
+        category_id = request.query_params.get('category')
+        account_id = request.query_params.get('account')
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+
+        if type_param:
+            queryset = queryset.filter(type=type_param)
+        if category_id:
+            queryset = queryset.filter(category_id=category_id)
+        if account_id:
+            queryset = queryset.filter(account_id=account_id)
+        if start_date:
+            queryset = queryset.filter(date__gte=start_date)
+        if end_date:
+            queryset = queryset.filter(date__lte=end_date)
+
+        paginator = CustomPageNumberPagination()
+        page = paginator.paginate_queryset(queryset=queryset, request=request)
+
+        if page is not None:
+            serializer = serializers.TransactionSerializer(page, many=True, context={'request': request})
+            return paginator.get_paginated_response(serializer.data)
+
+        serializer = serializers.TransactionSerializer(queryset, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -259,3 +295,90 @@ class TransactionDeleteAPIView(APIView):
 
         transaction.delete()
         return Response({"message": "Tranzaksiya o'chirildi va balans tiklandi"}, status=status.HTTP_204_NO_CONTENT)
+
+
+class PasswordResetRequestAPIView(APIView):
+    permission_classes = [permissions.AllowAny]  
+
+    def post(self, request):
+        serializer = serializers.PasswordResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        user = CustomUser.objects.get(email=email)
+
+        
+        EmailConfirmationCode.objects.filter(user=user, is_used=False).update(is_used=True)
+
+  
+        code = str(random.randint(100000, 999999))
+        EmailConfirmationCode.objects.create(user=user, code=code)
+
+        # Emailga jo'natish
+        send_mail(
+            subject="Kissa — Parolni tiklash kodi",
+            message=f"Parolni tiklash uchun tasdiqlash kodingiz: {code}",
+            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'bekzodovich0709@gmail.com'),
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+
+        return Response(
+            {"message": "Parolni tiklash kodi emailga yuborildi."},
+            status=status.HTTP_200_OK
+        )
+
+
+class PasswordResetConfirmAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = serializers.PasswordResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = serializer.validated_data['user']
+        confirmation_code = serializer.validated_data['confirmation_code']
+        new_password = serializer.validated_data['new_password']
+
+     
+        user.set_password(new_password)
+        user.save()
+
+        confirmation_code.is_used = True
+        confirmation_code.save()
+
+        return Response(
+            {"message": "Parolingiz muvaffaqiyatli o'zgartirildi! Endi yangi parol bilan tizimga kirishingiz mumkin."},
+            status=status.HTTP_200_OK
+        )
+
+
+class UserProfileAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = serializers.UserProfileSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        serializer = serializers.UserProfileSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ChangePasswordAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = serializers.ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+        user.set_password(serializer.validated_data['new_password'])
+        user.save()
+
+        return Response(
+            {"message": "Parolingiz muvaffaqiyatli o'zgartirildi!"},
+            status=status.HTTP_200_OK
+        )

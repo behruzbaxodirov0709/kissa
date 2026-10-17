@@ -106,7 +106,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ["id", "username", "first_name", "last_name", "email", "language", "is_verified"]
-        read_only_fields = ["id", "email", "is_verified"]
+        read_only_fields = ["id", "username", "email", "is_verified"]
 
 
 class VerifyOTPSerializer(serializers.Serializer):
@@ -250,5 +250,95 @@ class TransactionSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "amount": f"Hisobingizda yetarli mablag' yo'q. Mavjud balans: {account.balance}"
                 })
+
+        return attrs
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, email):
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError({"email": "Ushbu email bilan foydalanuvchi topilmadi!"})
+        
+        return email
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        code = attrs.get('code')
+        new_password = attrs.get('new_password')
+        confirm_password = attrs.get('confirm_password')
+
+
+        try:
+            user = CustomUser.objects.get(email=email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError({"email": "Foydalanuvchi topilmadi!"})
+
+        confirmation_code = EmailConfirmationCode.objects.filter(user=user, code=code, is_used=False).last()
+
+        if not confirmation_code:
+            raise serializers.ValidationError({"code": "Kiritilgan kod noto'g'ri yoki allaqachon ishlatilgan!"})
+
+        if not confirmation_code.is_valid():
+            raise serializers.ValidationError({"code": "Kodni amal qilish muddati tugagan!"})
+
+        if new_password and confirm_password and new_password != confirm_password:
+            raise serializers.ValidationError({"confirm_password": "Yangi parollar bir-biriga mos kelmadi!"})
+
+        
+        errors = []
+        if len(new_password) < 8:
+            errors.append("Parol kamida 8 ta belgidan iborat bo'lishi kerak.")
+        if not any(char.isdigit() for char in new_password):
+            errors.append("Parolda kamida bitta raqam bo'lishi kerak.")
+        if not any(char.isalpha() for char in new_password):
+            errors.append("Parolda kamida bitta harf bo'lishi kerak.")
+
+        if errors:
+            raise serializers.ValidationError({"new_password": errors})
+
+        attrs['user'] = user
+        attrs['confirmation_code'] = confirmation_code
+        return attrs
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True, required=True)
+    new_password = serializers.CharField(write_only=True, min_length=8, required=True)
+    confirm_password = serializers.CharField(write_only=True, min_length=8, required=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Eski parol noto'g'ri kiritildi!")
+        return value
+
+    def validate(self, attrs):
+        new_password = attrs.get('new_password')
+        confirm_password = attrs.get('confirm_password')
+
+        if new_password != confirm_password:
+            raise serializers.ValidationError({"confirm_password": "Yangi parollar bir-biriga mos kelmadi!"})
+
+        errors = []
+        if len(new_password) < 8:
+            errors.append("Parol kamida 8 ta belgidan iborat bo'lishi kerak.")
+        if not any(char.isdigit() for char in new_password):
+            errors.append("Parolda kamida bitta raqam bo'lishi kerak.")
+        if not any(char.isalpha() for char in new_password):
+            errors.append("Parolda kamida bitta harf bo'lishi kerak.")
+
+        if errors:
+            raise serializers.ValidationError({"new_password": errors})
 
         return attrs
