@@ -69,8 +69,7 @@ class ResendOTPView(APIView):
         user = CustomUser.objects.get(email=email)
         last_send_code = EmailConfirmationCode.objects.filter(user=user, code=code, is_used=False).last()
         last_send_code.is_used = True
-        last_send_code.save()      
-        d          
+        last_send_code.save()
         code =str(random.randint(100000, 999999))
 
         EmailConfirmationCode.objects.create(user=user, code=code)
