@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model, authenticate
-from .models import CustomUser, EmailConfirmationCode, Account
+from .models import CustomUser, EmailConfirmationCode, Account, Category, Transaction
 
 
 
@@ -183,3 +183,72 @@ class ResendOTPSerializer(serializers.Serializer):
             )
 
         return email
+
+
+class AccountSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Account
+        fields = ['id', 'name', 'type', 'balance', 'currency', 'created_at']
+        read_only_fields = ["id", "created_at"]
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ["id", "name", "type"]
+        read_only_fields = ["id"]
+
+
+class TransactionSerializer(serializers.ModelSerializer):
+    account_name = serializers.ReadOnlyField(source='account.name')
+    category_name = serializers.ReadOnlyField(source='category.name')
+
+    class Meta:
+        model = Transaction
+        fields = [
+            'id', 
+            'account', 
+            'account_name', 
+            'category', 
+            'category_name', 
+            'type', 
+            'amount', 
+            'date', 
+            'description', 
+            'created_at'
+        ]
+        read_only_fields = ['id', 'created_at']
+
+    def validate(self, attrs):
+        request = self.context.get('request')
+        if not request or not request.user:
+            return attrs
+
+        user = request.user
+        account = attrs.get('account')
+        category = attrs.get('category')
+        transaction_type = attrs.get('type')
+        amount = attrs.get('amount')
+
+
+        if account and account.user != user:
+            raise serializers.ValidationError({"account": "Ushbu hisob sizga tegishli emas!"})
+
+        
+        if category and category.user != user:
+            raise serializers.ValidationError({"category": "Ushbu kategoriya sizga tegishli emas!"})
+
+       
+        if category and transaction_type and category.type != transaction_type:
+            raise serializers.ValidationError({
+                "category": f"Ushbu kategoriya turi ('{category.type}') tranzaksiya turi ('{transaction_type}') bilan mos emas!"
+            })
+
+       
+        if transaction_type == 'expense' and account and amount:
+            if account.balance < amount:
+                raise serializers.ValidationError({
+                    "amount": f"Hisobingizda yetarli mablag' yo'q. Mavjud balans: {account.balance}"
+                })
+
+        return attrs
