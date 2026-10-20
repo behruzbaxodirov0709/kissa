@@ -23,3 +23,7 @@
 .login-error.show {
   display: block;
 }
+/* Language selector: compact, consistent control on auth and dashboard */
+.auth-language select,#dashboardLanguage{font:inherit;font-size:13px;color:#152238;background:#fff;border:1px solid #d8e1ef;border-radius:10px;padding:9px 12px;min-width:118px;cursor:pointer;outline:none}
+.auth-language{display:flex;align-items:center;justify-content:flex-end;gap:9px;margin-bottom:18px}
+#dashboardLanguage{min-width:104px;padding:7px 9px;background:#f7f9fc}

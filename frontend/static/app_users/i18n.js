@@ -137,4 +137,4 @@
     document.dispatchEvent(new CustomEvent('kissa:language', {detail: current}));
   }
   window.KissaI18n = { setLanguage, getLanguage: () => current, applyTranslations, t: translateText };
-})(); 
+})();

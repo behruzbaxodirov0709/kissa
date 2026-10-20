@@ -27,6 +27,14 @@
     <section class="auth-panel">
       <div class="auth-card">
         <div class="mobile-brand"><div class="brand-mark">k<span>.</span></div><strong>Kissa</strong></div>
+        <div class="auth-language">
+          <label for="authLanguage">Til</label>
+          <select id="authLanguage">
+            <option value="uz">O‘zbek</option>
+            <option value="ru">Русский</option>
+            <option value="en">English</option>
+          </select>
+        </div>
         <div id="authForms">
           <div class="auth-tabs"><button class="active" data-auth-tab="login">Kirish</button><button data-auth-tab="register">Ro‘yxatdan o‘tish</button></div>
           <form id="loginForm" class="auth-form">
@@ -65,7 +73,7 @@
       <div class="sidebar-bottom"><div class="help-card"><div class="help-spark">✦</div><b>Moliyaviy tartib</b><p>Kichik odatlar katta o‘zgarishlar qiladi.</p></div><button class="profile-mini" id="logoutBtn"><span class="avatar" id="userAvatar">K</span><span class="profile-text"><b id="userName">Foydalanuvchi</b><small>Chiqish</small></span><span class="logout-icon">↗</span></button></div>
     </aside>
     <main class="main-content">
-      <header class="topbar"><button class="mobile-menu" id="mobileMenu">☰</button><div class="breadcrumb"><span>Kissa</span><i>/</i><b id="crumbTitle">Umumiy ko‘rinish</b></div><div class="topbar-right"><span class="today" id="todayText"></span><button class="icon-button" id="refreshBtn" title="Yangilash">↻</button><div class="top-avatar" id="topAvatar">K</div></div></header>
+      <header class="topbar"><button class="mobile-menu" id="mobileMenu">☰</button><div class="breadcrumb"><span>Kissa</span><i>/</i><b id="crumbTitle">Umumiy ko‘rinish</b></div><div class="topbar-right"><select id="dashboardLanguage" aria-label="Language"><option value="uz">O‘zbek</option><option value="ru">Русский</option><option value="en">English</option></select><span class="today" id="todayText"></span><button class="icon-button" id="refreshBtn" title="Yangilash">↻</button><div class="top-avatar" id="topAvatar">K</div></div></header>
       <div class="page-wrap">
         <div class="page-heading"><div><div class="eyebrow" id="welcomeEyebrow">SIZNING MOLIYANGIZ</div><h1 id="pageTitle">Umumiy ko‘rinish<span class="title-dot">.</span></h1><p id="pageSubtitle">Bugungi moliyaviy holatingizga bir nazar.</p></div><button class="btn btn-primary" id="newTransactionBtn">＋ <span>Tranzaksiya qo‘shish</span></button></div>
           <section id="overviewView" class="view-section">
