@@ -1,0 +1,87 @@
+{% load static %}
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101b2d">
+  <title>Kissa — Shaxsiy moliya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'app_users/app.css' %}">
+</head>
+<body>
+  <div class="auth-shell" id="authShell">
+    <section class="auth-brand">
+      <div class="brand-mark">k<span>.</span></div>
+      <div class="brand-copy"><strong>Kissa</strong><small>Money, made mindful.</small></div>
+      <div class="auth-promo">
+        <div class="eyebrow"><span class="pulse"></span> SHAXSIY MOLIYA</div>
+        <h1>Pulingizni<br><em>ongli boshqaring.</em></h1>
+        <p>Kirim, chiqim va maqsadlaringizni bitta sokin, tartibli makonda kuzating.</p>
+        <div class="promo-stats"><div><b>01</b><span>Har bir so‘m<br>o‘z o‘rnida</span></div><div><b>02</b><span>Moliyaviy<br>aniqlik</span></div></div>
+      </div>
+      <div class="auth-footer">© 2026 Kissa Finance</div>
+    </section>
+    <section class="auth-panel">
+      <div class="auth-card">
+        <div class="mobile-brand"><div class="brand-mark">k<span>.</span></div><strong>Kissa</strong></div>
+        <div id="authForms">
+          <div class="auth-tabs"><button class="active" data-auth-tab="login">Kirish</button><button data-auth-tab="register">Ro‘yxatdan o‘tish</button></div>
+          <form id="loginForm" class="auth-form">
+            <div class="form-heading"><h2>Yana xush kelibsiz</h2><p>Hisobingizga kirish uchun ma’lumotlarni kiriting.</p></div>
+            <label>Email manzil<input name="email" type="email" placeholder="you@example.com" autocomplete="email" required></label>
+            <label>Parol<input name="password" type="password" placeholder="Parolingiz" autocomplete="current-password" required></label>
+            <button class="btn btn-primary btn-wide" type="submit">Kirish <span>↗</span></button>
+            <button class="text-button" type="button" id="forgotBtn">Parolni unutdingizmi?</button>
+          </form>
+          <form id="registerForm" class="auth-form hidden">
+            <div class="form-heading"><h2>Yangi hisob yarating</h2><p>Kissa bilan moliyangizni boshqarishni boshlang.</p></div>
+            <div class="form-grid"><label>Ism<input name="first_name" placeholder="Ismingiz" required autocomplete="given-name"></label><label>Familiya<input name="last_name" placeholder="Familiangiz" required autocomplete="family-name"></label></div>
+            <div class="form-grid"><label>Foydalanuvchi nomi<input name="username" placeholder="Behruz" required autocomplete="username"></label><label>Email<input name="email" type="email" placeholder="you@example.com" required autocomplete="email"></label></div>
+            <div class="form-grid"><label>Parol<input name="password" type="password" minlength="8" placeholder="Kamida 8 belgi" required></label><label>Parolni takrorlang<input name="confirm_password" type="password" minlength="8" placeholder="Parolni takrorlang" required></label></div>
+            <label>Til<select name="language"><option value="uz">O‘zbek</option><option value="ru">Русский</option><option value="en">English</option></select></label>
+            <button class="btn btn-primary btn-wide" type="submit">Hisob yaratish <span>↗</span></button>
+          </form>
+          <form id="otpForm" class="auth-form hidden">
+            <div class="form-heading"><h2>Emailni tasdiqlang</h2><p>Emailingizga yuborilgan 6 xonali kodni kiriting.</p></div>
+            <label>Email<input name="email" type="email" required></label><label>Tasdiqlash kodi<input name="code" inputmode="numeric" maxlength="6" placeholder="000000" required></label>
+            <button class="btn btn-primary btn-wide" type="submit">Tasdiqlash <span>↗</span></button><button class="text-button" type="button" id="resendOtp">Kodni qayta yuborish</button>
+          </form>
+          <form id="resetForm" class="auth-form hidden"><div class="form-heading"><h2>Parolni tiklash</h2><p>Emailingizga kod yuboramiz.</p></div><label>Email<input name="email" type="email" required></label><button class="btn btn-primary btn-wide" type="submit">Kod yuborish <span>↗</span></button><button class="text-button" type="button" id="backLogin">Kirishga qaytish</button></form>
+        </div>
+        <div class="auth-note"><span class="lock-icon">▣</span> Ma’lumotlaringiz faqat sizga tegishli.</div>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast global-toast" id="toast" role="status"></div>
+  <div class="app-shell hidden" id="appShell">
+    <aside class="sidebar" id="sidebar">
+      <a class="sidebar-brand" href="#"><span class="brand-mark">k<span>.</span></span><span><b>Kissa</b><small>PERSONAL FINANCE</small></span></a>
+      <div class="side-label">MENYU</div>
+      <nav class="side-nav"><button class="nav-item active" data-view="overview"><span class="nav-icon">◫</span> Umumiy ko‘rinish</button><button class="nav-item" data-view="transactions"><span class="nav-icon">↕</span> Tranzaksiyalar</button><button class="nav-item" data-view="accounts"><span class="nav-icon">▤</span> Hisoblar</button><button class="nav-item" data-view="categories"><span class="nav-icon">◈</span> Kategoriyalar</button></nav>
+      <div class="sidebar-bottom"><div class="help-card"><div class="help-spark">✦</div><b>Moliyaviy tartib</b><p>Kichik odatlar katta o‘zgarishlar qiladi.</p></div><button class="profile-mini" id="logoutBtn"><span class="avatar" id="userAvatar">K</span><span class="profile-text"><b id="userName">Foydalanuvchi</b><small>Chiqish</small></span><span class="logout-icon">↗</span></button></div>
+    </aside>
+    <main class="main-content">
+      <header class="topbar"><button class="mobile-menu" id="mobileMenu">☰</button><div class="breadcrumb"><span>Kissa</span><i>/</i><b id="crumbTitle">Umumiy ko‘rinish</b></div><div class="topbar-right"><span class="today" id="todayText"></span><button class="icon-button" id="refreshBtn" title="Yangilash">↻</button><div class="top-avatar" id="topAvatar">K</div></div></header>
+      <div class="page-wrap">
+        <div class="page-heading"><div><div class="eyebrow" id="welcomeEyebrow">SIZNING MOLIYANGIZ</div><h1 id="pageTitle">Umumiy ko‘rinish<span class="title-dot">.</span></h1><p id="pageSubtitle">Bugungi moliyaviy holatingizga bir nazar.</p></div><button class="btn btn-primary" id="newTransactionBtn">＋ <span>Tranzaksiya qo‘shish</span></button></div>
+          <section id="overviewView" class="view-section">
+          <div class="metric-grid"><article class="metric-card balance-card"><div class="metric-top"><span>UMUMIY BALANS</span><span class="metric-symbol">◉</span></div><div class="metric-value" id="totalBalance">0 <small>UZS</small></div><div class="metric-bottom"><span class="metric-caption">Barcha hisoblaringiz bo‘yicha</span><span class="metric-chip">● Real vaqt</span></div><div class="balance-decoration"></div></article><article class="metric-card"><div class="metric-top"><span>JAMI KIRIM</span><span class="metric-symbol income-symbol">↙</span></div><div class="metric-value income-text" id="totalIncome">0 <small>UZS</small></div><div class="metric-bottom"><span class="metric-caption">Kiritilgan mablag‘lar</span><span class="metric-trend">↗</span></div></article><article class="metric-card"><div class="metric-top"><span>JAMI CHIQIM</span><span class="metric-symbol expense-symbol">↗</span></div><div class="metric-value expense-text" id="totalExpense">0 <small>UZS</small></div><div class="metric-bottom"><span class="metric-caption">Sarflangan mablag‘lar</span><span class="metric-trend expense-trend">↘</span></div></article></div>
+          <div class="content-grid"><section class="panel chart-panel"><div class="panel-header"><div><h3>Moliyaviy oqim</h3><p>Kirim va chiqimlar taqqoslanishi</p></div><span class="period-label">JAMI</span></div><div class="chart-legend"><span><i class="legend-dot income-dot"></i> Kirim</span><span><i class="legend-dot expense-dot"></i> Chiqim</span></div><div class="bar-chart" id="flowChart"><div class="chart-empty">Tranzaksiyalar qo‘shilgach, diagramma ko‘rinadi.</div></div><div class="chart-foot"><span>Moliyaviy faoliyatingiz</span><b id="flowInsight">Hozircha ma’lumot yo‘q</b></div></section><section class="panel accounts-panel"><div class="panel-header"><div><h3>Hisoblaringiz</h3><p>Pul saqlanadigan joylar</p></div><button class="panel-link" data-view="accounts">Barchasi <span>→</span></button></div><div id="accountPreview" class="account-list"><div class="empty-state">Hisoblar hali yo‘q.</div></div><button class="btn btn-soft btn-wide" id="addAccountBtn">＋ Yangi hisob</button></section></div>
+          <section class="panel recent-panel"><div class="panel-header"><div><h3>So‘nggi tranzaksiyalar</h3><p>Yaqinda amalga oshirilgan operatsiyalar</p></div><button class="panel-link" data-view="transactions">Barchasini ko‘rish <span>→</span></button></div><div class="table-wrap"><table><thead><tr><th>TRANZAKSIYA</th><th>KATEGORI</th><th>SANA</th><th class="align-right">SUMMA</th><th></th></tr></thead><tbody id="recentRows"><tr><td colspan="5" class="empty-cell">Hozircha tranzaksiya yo‘q.</td></tr></tbody></table></div></section>
+        </section>
+        <section id="transactionsView" class="view-section hidden"><section class="panel"><div class="panel-header transaction-tools"><div><h3>Tranzaksiyalar tarixi</h3><p>Kirim va chiqimlaringizni boshqaring</p></div><div class="filter-row"><select id="transactionTypeFilter"><option value="">Barcha turlar</option><option value="income">Kirim</option><option value="expense">Chiqim</option></select><select id="transactionAccountFilter"><option value="">Barcha hisoblar</option></select><button class="btn btn-primary" id="transactionCreateBtn">＋ Yangi</button></div></div><div class="table-wrap"><table><thead><tr><th>TRANZAKSIYA</th><th>HISOB</th><th>KATEGORI</th><th>SANA</th><th class="align-right">SUMMA</th><th></th></tr></thead><tbody id="transactionRows"></tbody></table></div><div class="pagination" id="pagination"></div></section></section>
+        <section id="accountsView" class="view-section hidden"><div class="section-toolbar"><div><h3>Hisoblaringiz</h3><p>Naqd pul, karta va valyuta hisoblari</p></div><button class="btn btn-primary" id="accountCreateBtn">＋ Hisob qo‘shish</button></div><div class="account-grid" id="accountGrid"></div></section>
+        <section id="categoriesView" class="view-section hidden"><div class="section-toolbar"><div><h3>Kategoriyalar</h3><p>Kirim va chiqimlarni tartibga soling</p></div><button class="btn btn-primary" id="categoryCreateBtn">＋ Kategoriya qo‘shish</button></div><div class="category-grid"><section class="panel"><div class="panel-header"><div><h3>Chiqim kategoriyalari</h3><p>Sarflaringizni guruhlang</p></div></div><div id="expenseCategories" class="category-list"></div></section><section class="panel"><div class="panel-header"><div><h3>Kirim kategoriyalari</h3><p>Daromad manbalari</p></div></div><div id="incomeCategories" class="category-list"></div></section></div></section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="modalBackdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><div><div class="eyebrow">KISSA / FORM</div><h2 id="modalTitle">Yangi tranzaksiya</h2></div><button class="icon-button" id="modalClose" aria-label="Yopish">×</button></div><form id="modalForm"><div id="modalFields"></div><div class="modal-actions"><button type="button" class="btn btn-ghost" id="modalCancel">Bekor qilish</button><button type="submit" class="btn btn-primary" id="modalSubmit">Saqlash <span>↗</span></button></div></form></section></div>
+  <script src="{% static 'app_users/i18n.js' %}"></script>
+  <script src="{% static 'app_users/app.js' %}"></script>
+</body>
+</html>

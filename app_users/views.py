@@ -10,6 +10,12 @@ from . import serializers
 from .pagination import CustomPageNumberPagination
 import random
 from drf_spectacular.utils import extend_schema, OpenApiParameter
+from django.db import transaction
+
+
+def frontend_home(request):
+    return render(request, 'app_users/index.html')
+
 
 
 def get_tokens_for_user(user):
@@ -220,7 +226,7 @@ class TransactionListAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):
-        transactions = Transaction.objects.filter(user=request.user).order_by('-created_at')
+        queryset = Transaction.objects.filter(user=request.user).order_by('-created_at')
 
         type_param = request.query_params.get('type')
         category_id = request.query_params.get('category')
@@ -277,6 +283,74 @@ class TransactionDetailAPIView(APIView):
         transaction = get_object_or_404(Transaction, pk=pk, user=request.user)
         serializer = serializers.TransactionSerializer(transaction)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class TransactionUpdateAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, pk):
+        with transaction.atomic():
+
+            # 1. Tranzaksiyani topamiz
+            old_transaction = get_object_or_404(
+                Transaction.objects.select_for_update(),
+                pk=pk,
+                user=request.user
+            )
+
+            # 2. Eski tranzaksiya ma'lumotlarini saqlaymiz
+            old_account = old_transaction.account
+            old_type = old_transaction.type
+            old_amount = old_transaction.amount
+
+            # 3. Yangi ma'lumotlarni tekshiramiz
+            serializer = serializers.TransactionSerializer(
+                old_transaction,
+                data=request.data,
+                partial=True,
+                context={'request': request}
+            )
+
+            serializer.is_valid(raise_exception=True)
+
+            # 4. Yangi tranzaksiyani saqlaymiz
+            new_transaction = serializer.save()
+
+            new_account = new_transaction.account
+            new_type = new_transaction.type
+            new_amount = new_transaction.amount
+
+            # 5. Eski tranzaksiya ta'sirini balansdan bekor qilamiz
+            if old_type == 'income':
+                old_account.balance -= old_amount
+
+            elif old_type == 'expense':
+                old_account.balance += old_amount
+
+            # 6. Yangi tranzaksiya ta'sirini balansga qo'shamiz
+            if new_type == 'income':
+                new_account.balance += new_amount
+
+            elif new_type == 'expense':
+                new_account.balance -= new_amount
+
+            # 7. Balanslarni saqlaymiz
+            old_account.save(update_fields=['balance'])
+
+            if old_account.pk != new_account.pk:
+                new_account.save(update_fields=['balance'])
+
+            elif old_account.pk == new_account.pk:
+                new_account.save(update_fields=['balance'])
+
+        # 8. Yangilangan ma'lumotni qaytaramiz
+        return Response(
+            serializers.TransactionSerializer(
+                new_transaction,
+                context={'request': request}
+            ).data,
+            status=status.HTTP_200_OK
+        )
 
 
 class TransactionDeleteAPIView(APIView):

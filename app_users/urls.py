@@ -3,6 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
 urlpatterns = [
+    path('', views.frontend_home, name='frontend-home'),
     # ==================== 1. AUTHENTICATION & PROFILE ====================
     path('register/', views.RegisterView.as_view(), name='register'),
     path('login/', views.LoginView.as_view(), name='login'),
@@ -32,9 +33,8 @@ urlpatterns = [
     path('transactions/', views.TransactionListAPIView.as_view(), name='transaction-list'),
     path('transactions/create/', views.TransactionCreateAPIView.as_view(), name='transaction-create'),
     path('transactions/<int:pk>/', views.TransactionDetailAPIView.as_view(), name='transaction-detail'),
+    path('transactions/<int:pk>/update/', views.TransactionUpdateAPIView.as_view(), name='transaction-update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteAPIView.as_view(), name='transaction-delete'),
-
-    path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
 
     # Profile Endpoints
     path('profile/', views.UserProfileAPIView.as_view(), name='user-profile'),

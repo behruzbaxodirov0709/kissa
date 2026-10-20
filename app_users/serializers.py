@@ -189,7 +189,7 @@ class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
         fields = ['id', 'name', 'type', 'balance', 'currency', 'created_at']
-        read_only_fields = ["id", "created_at"]
+        read_only_fields = ["id", 'balance', "created_at"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -221,38 +221,64 @@ class TransactionSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         request = self.context.get('request')
+
         if not request or not request.user:
             return attrs
 
         user = request.user
-        account = attrs.get('account')
-        category = attrs.get('category')
-        transaction_type = attrs.get('type')
-        amount = attrs.get('amount')
 
+        # Yangi qiymat bo'lmasa, eski qiymatni olamiz
+        account = attrs.get(
+            'account',
+            self.instance.account if self.instance else None
+        )
 
+        category = attrs.get(
+            'category',
+            self.instance.category if self.instance else None
+        )
+
+        transaction_type = attrs.get(
+            'type',
+            self.instance.type if self.instance else None
+        )
+
+        amount = attrs.get(
+            'amount',
+            self.instance.amount if self.instance else None
+        )
+
+        # Account shu userga tegishli ekanini tekshiramiz
         if account and account.user != user:
-            raise serializers.ValidationError({"account": "Ushbu hisob sizga tegishli emas!"})
-
-        
-        if category and category.user != user:
-            raise serializers.ValidationError({"category": "Ushbu kategoriya sizga tegishli emas!"})
-
-       
-        if category and transaction_type and category.type != transaction_type:
             raise serializers.ValidationError({
-                "category": f"Ushbu kategoriya turi ('{category.type}') tranzaksiya turi ('{transaction_type}') bilan mos emas!"
+                'account': 'Bu account sizga tegishli emas.'
             })
 
-       
-        if transaction_type == 'expense' and account and amount:
-            if account.balance < amount:
+        # Category shu userga tegishli ekanini tekshiramiz
+        if category and category.user != user:
+            raise serializers.ValidationError({
+                'category': 'Bu category sizga tegishli emas.'
+            })
+
+        # Expense uchun balans yetarliligini tekshiramiz
+        if (
+            account
+            and transaction_type == 'expense'
+            and amount is not None
+        ):
+            balance = account.balance
+
+            # PATCH paytida eski expense summasini balansga qaytaramiz
+            if self.instance and self.instance.type == 'expense':
+                if self.instance.account_id == account.id:
+                    balance += self.instance.amount
+
+            if amount > balance:
                 raise serializers.ValidationError({
-                    "amount": f"Hisobingizda yetarli mablag' yo'q. Mavjud balans: {account.balance}"
+                    'amount': 'Accountda mablag‘ yetarli emas.'
                 })
 
         return attrs
-
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
