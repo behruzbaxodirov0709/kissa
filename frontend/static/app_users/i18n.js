@@ -99,42 +99,54 @@
     }
   };
   let current = 'uz';
-  const normalize = s => String(s || '').replace(/\s+/g, ' ').trim();
-  function translateText(text) {
-    const dict = dictionaries[current] || {};
-    const key = normalize(text);
-    if (dict[key]) return dict[key];
-    // Translate text while preserving leading/trailing whitespace.
-    const leading = String(text).match(/^\s*/)?.[0] || '';
-    const trailing = String(text).match(/\s*$/)?.[0] || '';
-    return dict[normalize(text)] ? leading + dict[normalize(text)] + trailing : text;
+  const originalText = new WeakMap();
+  const originalAttrs = new WeakMap();
+  const normalize = value => String(value ?? '').replace(/\s+/g, ' ').trim();
+
+  function translateText(value) {
+    const dictionary = dictionaries[current] || {};
+    const key = normalize(value);
+    return dictionary[key] || value;
   }
-  function applyTranslations(root=document.body) {
-    if (current === 'uz') return;
+
+  function applyTranslations(root = document.body) {
+    if (!root) return;
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
     const nodes = [];
-    while (walker.nextNode()) nodes.push(walker.currentNode);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (!originalText.has(node)) originalText.set(node, node.nodeValue);
+      nodes.push(node);
+    }
     nodes.forEach(node => {
-      const original = node.nodeValue;
-      const translated = translateText(original);
-      // Avoid triggering MutationObserver again when the text is already translated.
-      if (translated !== original) node.nodeValue = translated;
+      const source = originalText.get(node);
+      const translated = current === 'uz' ? source : translateText(source);
+      if (node.nodeValue !== translated) node.nodeValue = translated;
     });
-    root.querySelectorAll?.('[placeholder],[title],[aria-label]').forEach(el => {
-      ['placeholder','title','aria-label'].forEach(attr => {
-        if (!el.hasAttribute(attr)) return;
-        const original = el.getAttribute(attr);
-        const translated = translateText(original);
-        if (translated !== original) el.setAttribute(attr, translated);
+
+    root.querySelectorAll?.('[placeholder],[title],[aria-label]').forEach(element => {
+      ['placeholder', 'title', 'aria-label'].forEach(attribute => {
+        if (!element.hasAttribute(attribute)) return;
+        let saved = originalAttrs.get(element);
+        if (!saved) { saved = {}; originalAttrs.set(element, saved); }
+        if (!(attribute in saved)) saved[attribute] = element.getAttribute(attribute);
+        const source = saved[attribute];
+        const translated = current === 'uz' ? source : translateText(source);
+        if (element.getAttribute(attribute) !== translated) element.setAttribute(attribute, translated);
       });
     });
     document.documentElement.lang = current;
   }
-  function setLanguage(lang) {
-    current = dictionaries[lang] ? lang : 'uz';
-    document.documentElement.lang = current;
+
+  function setLanguage(language) {
+    current = Object.prototype.hasOwnProperty.call(dictionaries, language) ? language : 'uz';
+    // Sync the selector wherever it is currently rendered.
+    ['#authLanguage', '#dashboardLanguage'].forEach(selector => {
+      const select = document.querySelector(selector);
+      if (select) select.value = current;
+    });
     applyTranslations();
-    document.dispatchEvent(new CustomEvent('kissa:language', {detail: current}));
+    document.dispatchEvent(new CustomEvent('kissa:language', { detail: current }));
   }
   window.KissaI18n = { setLanguage, getLanguage: () => current, applyTranslations, t: translateText };
 })();

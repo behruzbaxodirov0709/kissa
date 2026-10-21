@@ -8,7 +8,7 @@
     const safe = ['uz','ru','en'].includes(lang) ? lang : 'uz';
     localStorage.setItem('kissa_language', safe);
     document.documentElement.lang = safe;
-    ['#authLanguage','#dashboardLanguage','#registerForm [name=language]'].forEach(sel => { const el=$(sel); if(el) el.value=safe; });
+    ['#authLanguage','#dashboardLanguage'].forEach(sel => { const el=$(sel); if(el) el.value=safe; });
     if(window.KissaI18n) window.KissaI18n.setLanguage(safe);
     document.dispatchEvent(new CustomEvent('kissa:language'));
   };
@@ -16,7 +16,44 @@
   const money = (value, currency='UZS') => `${new Intl.NumberFormat('uz-UZ',{maximumFractionDigits:2}).format(Number(value||0))} <small>${escapeHtml(currency)}</small>`;
   const dateText = (value) => { if(!value) return '—'; const d=new Date(`${value}T00:00:00`); return Number.isNaN(d.getTime()) ? value : d.toLocaleDateString('uz-UZ',{day:'2-digit',month:'short',year:'numeric'}); };
   const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const showToast = (message, type='success') => { const el=$('#toast'); if(!el){ window.alert(message); return; } el.textContent=message; el.className=`toast show ${type}`; window.clearTimeout(showToast.timer); showToast.timer=window.setTimeout(()=>el.className='toast global-toast',4500); };
+  const showToast = (message, type='success') => {
+    const localized = typeof localizeServerMessage === 'function' ? localizeServerMessage(message) : message;
+    let el = $('#toast');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'toast';
+      el.setAttribute('role', 'alert');
+      el.setAttribute('aria-live', 'assertive');
+    }
+    // Portal to body and use inline positioning so it cannot inherit a bottom/footer layout.
+    if (el.parentElement !== document.body) document.body.appendChild(el);
+    el.textContent = localized;
+    el.className = `toast show ${type}`;
+    Object.assign(el.style, {
+      position: 'fixed',
+      top: '18px',
+      bottom: 'auto',
+      left: '50%',
+      right: 'auto',
+      transform: 'translateX(-50%)',
+      zIndex: '2147483000',
+      width: 'min(560px, calc(100vw - 28px))',
+      maxWidth: 'calc(100vw - 28px)',
+      margin: '0',
+      padding: '15px 20px',
+      borderRadius: '14px',
+      boxShadow: '0 14px 42px rgba(12, 25, 45, .20)',
+      fontSize: '14px',
+      lineHeight: '1.5',
+      fontWeight: '600',
+      boxSizing: 'border-box'
+    });
+    window.clearTimeout(showToast.timer);
+    showToast.timer = window.setTimeout(() => {
+      el.className = 'toast global-toast';
+      el.style.display = 'none';
+    }, 6000);
+  };
   const showLoginError = (message) => {
     const form = $('#loginForm');
     let error = $('#loginError');
@@ -35,7 +72,7 @@
         }
     }
 
-    error.textContent = message;
+    error.textContent = typeof localizeServerMessage === 'function' ? localizeServerMessage(message) : message;
     error.classList.add('show');
 };
 
@@ -45,6 +82,52 @@ const clearLoginError = () => {
         error.classList.remove('show');
     }
 };
+  const getCurrentLanguage = () => localStorage.getItem('kissa_language') || window.KissaI18n?.getLanguage?.() || 'uz';
+  const localizeServerMessage = (message) => {
+    const lang = getCurrentLanguage();
+    const raw = String(message || '').trim();
+    const key = raw.toLowerCase().replace(/[.!?]+$/, '').replace(/\s+/g, ' ');
+    const patterns = [
+      {
+        test: /user with this email already exists|a user with this email already exists|email.*already exists|already exists.*email/,
+        uz: 'Bu email bilan foydalanuvchi allaqachon mavjud.',
+        ru: 'Пользователь с таким email уже существует.',
+        en: 'A user with this email already exists.'
+      },
+      {
+        test: /email.*invalid|enter a valid email|valid email address/,
+        uz: 'Email manzilini to‘g‘ri kiriting.',
+        ru: 'Введите корректный адрес электронной почты.',
+        en: 'Please enter a valid email address.'
+      },
+      {
+        test: /incorrect email or password|invalid credentials|email or password.*incorrect|no active account found/,
+        uz: 'Email yoki parol noto‘g‘ri.',
+        ru: 'Неверный email или пароль.',
+        en: 'Incorrect email or password.'
+      },
+      {
+        test: /password.*(too short|at least|minimum)|too short.*password/,
+        uz: 'Parol kamida 8 ta belgidan iborat bo‘lishi kerak.',
+        ru: 'Пароль должен содержать не менее 8 символов.',
+        en: 'Password must contain at least 8 characters.'
+      },
+      {
+        test: /password.*(match|same)|passwords.*match/,
+        uz: 'Parollar bir-biriga mos kelmaydi.',
+        ru: 'Пароли не совпадают.',
+        en: 'Passwords do not match.'
+      },
+      {
+        test: /username.*already exists|this username.*taken|username.*taken/,
+        uz: 'Bu foydalanuvchi nomi band.',
+        ru: 'Это имя пользователя уже занято.',
+        en: 'This username is already taken.'
+      }
+    ];
+    for (const item of patterns) if (item.test.test(key)) return item[lang] || item.uz;
+    return raw;
+  };
   const responseMessage = (data) => { if(!data) return 'Xatolik yuz berdi'; if(typeof data==='string') return data; if(data.message) return data.message; const values=Object.values(data); const first=values[0]; if(Array.isArray(first)) return String(first[0] ?? 'So‘rov bajarilmadi'); if(typeof first==='string') return first; if(first && typeof first==='object') return responseMessage(first); return 'So‘rov bajarilmadi'; };
   async function request(path, options={}) {
     const headers = {'Content-Type':'application/json', ...(options.headers||{})};
@@ -55,7 +138,7 @@ const clearLoginError = () => {
       clearSession(); showAuth('login'); throw new Error('Sessiya tugadi. Qayta kiring.');
     }
     let data=null; if(response.status!==204){const text=await response.text(); try{data=text?JSON.parse(text):null}catch(_e){data={message:text||response.statusText}}}
-    if(!response.ok) throw new Error(responseMessage(data)||`HTTP ${response.status}`);
+    if(!response.ok) throw new Error(localizeServerMessage(responseMessage(data)||`HTTP ${response.status}`));
     return data;
   }
   const saveTokens=(tokens)=>{state.access=tokens.access;state.refresh=tokens.refresh;localStorage.setItem('kissa_access',tokens.access);localStorage.setItem('kissa_refresh',tokens.refresh);};
@@ -65,11 +148,11 @@ const clearLoginError = () => {
   const showApp=()=>{$('#authShell').classList.add('hidden');$('#appShell').classList.remove('hidden');};
   const bindAuth=()=>{
     document.querySelectorAll('[data-auth-tab]').forEach(b=>b.addEventListener('click',()=>setAuthTab(b.dataset.authTab)));
-    ['#authLanguage','#dashboardLanguage','#registerForm [name=language]'].forEach(sel=>{const el=$(sel);if(el)el.addEventListener('change',()=>applyLanguage(el.value));});
+    ['#authLanguage','#dashboardLanguage'].forEach(sel=>{const el=$(sel);if(el)el.addEventListener('change',()=>applyLanguage(el.value));});
     applyLanguage(preferredLanguage);
     $('#loginForm').querySelectorAll('input').forEach(input=>input.addEventListener('input',clearLoginError));
     $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();clearLoginError();const f=new FormData(e.currentTarget);try{const data=await request('/login/',{method:'POST',noAuth:true,body:JSON.stringify({email:f.get('email'),password:f.get('password')})});saveTokens(data.tokens);await initApp();}catch(err){showLoginError(err.message)}});
-    $('#registerForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const body=Object.fromEntries(f.entries());const chosenLanguage=localStorage.getItem('kissa_language')||$('#authLanguage').value||body.language||'uz';body.language=chosenLanguage;applyLanguage(chosenLanguage);try{await request('/register/',{method:'POST',noAuth:true,body:JSON.stringify(body)});$('#otpForm [name=email]').value=body.email;setAuthTab('otp');showToast('Tasdiqlash kodi emailingizga yuborildi.');}catch(err){showToast(err.message,'error')}});
+    $('#registerForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const body=Object.fromEntries(f.entries());const chosenLanguage=localStorage.getItem('kissa_language')||$('#authLanguage').value||'uz';body.language=chosenLanguage;try{await request('/register/',{method:'POST',noAuth:true,body:JSON.stringify(body)});$('#otpForm [name=email]').value=body.email;setAuthTab('otp');showToast('Tasdiqlash kodi emailingizga yuborildi.');}catch(err){showToast(err.message,'error')}});
     $('#otpForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{const data=await request('/verify-otp/',{method:'POST',noAuth:true,body:JSON.stringify(Object.fromEntries(f.entries()))});saveTokens(data.tokens);await initApp();}catch(err){showToast(err.message,'error')}});
     $('#resendOtp').addEventListener('click',async()=>{try{await request('/resend-otp/',{method:'POST',noAuth:true,body:JSON.stringify({email:$('#otpForm [name=email]').value})});showToast('Yangi kod yuborildi.');}catch(err){showToast(err.message,'error')}});
     $('#forgotBtn').addEventListener('click',()=>setAuthTab('reset'));$('#backLogin').addEventListener('click',()=>setAuthTab('login'));
