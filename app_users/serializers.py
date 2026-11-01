@@ -280,6 +280,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
         return attrs
 
+
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 

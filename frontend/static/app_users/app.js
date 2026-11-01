@@ -144,7 +144,7 @@ const clearLoginError = () => {
   const saveTokens=(tokens)=>{state.access=tokens.access;state.refresh=tokens.refresh;localStorage.setItem('kissa_access',tokens.access);localStorage.setItem('kissa_refresh',tokens.refresh);};
   const clearSession=()=>{state.access=state.refresh=null;localStorage.removeItem('kissa_access');localStorage.removeItem('kissa_refresh');};
   const showAuth=(mode='login')=>{$('#authShell').classList.remove('hidden');$('#appShell').classList.add('hidden');setAuthTab(mode);};
-  const setAuthTab=(mode)=>{document.querySelectorAll('[data-auth-tab]').forEach(b=>b.classList.toggle('active',b.dataset.authTab===mode));['login','register','otp','reset'].forEach(k=>{const el=$(`#${k}Form`);if(el)el.classList.toggle('hidden',k!==mode)});};
+  const setAuthTab=(mode)=>{document.querySelectorAll('[data-auth-tab]').forEach(b=>b.classList.toggle('active',b.dataset.authTab===mode));['login','register','otp','reset','resetCode','resetPassword'].forEach(k=>{const el=$(`#${k}Form`);if(el)el.classList.toggle('hidden',k!==mode)});};
   const showApp=()=>{$('#authShell').classList.add('hidden');$('#appShell').classList.remove('hidden');};
   const bindAuth=()=>{
     document.querySelectorAll('[data-auth-tab]').forEach(b=>b.addEventListener('click',()=>setAuthTab(b.dataset.authTab)));
@@ -155,8 +155,45 @@ const clearLoginError = () => {
     $('#registerForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const body=Object.fromEntries(f.entries());const chosenLanguage=localStorage.getItem('kissa_language')||$('#authLanguage').value||'uz';body.language=chosenLanguage;try{await request('/register/',{method:'POST',noAuth:true,body:JSON.stringify(body)});$('#otpForm [name=email]').value=body.email;setAuthTab('otp');showToast('Tasdiqlash kodi emailingizga yuborildi.');}catch(err){showToast(err.message,'error')}});
     $('#otpForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{const data=await request('/verify-otp/',{method:'POST',noAuth:true,body:JSON.stringify(Object.fromEntries(f.entries()))});saveTokens(data.tokens);await initApp();}catch(err){showToast(err.message,'error')}});
     $('#resendOtp').addEventListener('click',async()=>{try{await request('/resend-otp/',{method:'POST',noAuth:true,body:JSON.stringify({email:$('#otpForm [name=email]').value})});showToast('Yangi kod yuborildi.');}catch(err){showToast(err.message,'error')}});
-    $('#forgotBtn').addEventListener('click',()=>setAuthTab('reset'));$('#backLogin').addEventListener('click',()=>setAuthTab('login'));
-    $('#resetForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.currentTarget);try{await request('/password-reset/request/',{method:'POST',noAuth:true,body:JSON.stringify({email:f.get('email')})});showToast('Emailga tiklash kodi yuborildi. Keyingi bosqich API orqali bajariladi.');}catch(err){showToast(err.message,'error')}});
+    $('#forgotBtn').addEventListener('click',()=>setAuthTab('reset'));
+    $('#backLogin').addEventListener('click',()=>setAuthTab('login'));
+    $('#resetBackEmail').addEventListener('click',()=>setAuthTab('reset'));
+    $('#resetBackCode').addEventListener('click',()=>setAuthTab('resetCode'));
+    $('#resetForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const email=new FormData(e.currentTarget).get('email').trim();
+      try{
+        await request('/password-reset/request/',{method:'POST',noAuth:true,body:JSON.stringify({email})});
+        $('#resetCodeForm [name=email]').value=email;
+        setAuthTab('resetCode');
+        showToast('Tiklash kodi emailingizga yuborildi.');
+      }catch(err){showToast(err.message,'error')}
+    });
+    $('#resetCodeForm').addEventListener('submit',e=>{
+      e.preventDefault();
+      const f=new FormData(e.currentTarget);
+      const email=f.get('email').trim(), code=f.get('code').trim();
+      if(!/^[0-9]{6}$/.test(code)){showToast('6 xonali kodni kiriting.','error');return;}
+      $('#resetPasswordForm [name=email]').value=email;
+      $('#resetPasswordForm [name=code]').value=code;
+      setAuthTab('resetPassword');
+    });
+    $('#resetPasswordForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const f=new FormData(e.currentTarget);
+      const email=f.get('email').trim(), code=f.get('code').trim();
+      const password=f.get('new_password'), confirmPassword=f.get('confirm_password');
+      if(password.length<8){showToast('Parol kamida 8 ta belgidan iborat bo‘lishi kerak.','error');return;}
+      if(password!==confirmPassword){showToast('Parollar bir-biriga mos kelmaydi.','error');return;}
+      try{
+        await request('/password-reset/confirm/',{method:'POST',noAuth:true,body:JSON.stringify({email,code,new_password:password,confirm_password:confirmPassword})});
+        e.currentTarget.reset();
+        $('#resetCodeForm').reset();
+        $('#resetForm').reset();
+        setAuthTab('login');
+        showToast('Parol muvaffaqiyatli tiklandi. Yangi parol bilan kiring.');
+      }catch(err){showToast(err.message,'error')}
+    });
   };
   const setView=(view)=>{state.currentView=view;const titles={overview:'Umumiy ko‘rinish',transactions:'Tranzaksiyalar',accounts:'Hisoblar',categories:'Kategoriyalar'};document.querySelectorAll('.view-section').forEach(el=>el.classList.add('hidden'));$(`#${view}View`).classList.remove('hidden');document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view===view));$('#crumbTitle').textContent=titles[view];$('#pageTitle').innerHTML=`${titles[view]}<span class="title-dot">.</span>`;$('#pageSubtitle').textContent=({overview:'Bugungi moliyaviy holatingizga bir nazar.',transactions:'Kirim va chiqimlaringizni kuzating.',accounts:'Pul saqlanadigan hisoblaringiz.',categories:'Tranzaksiyalaringizni tartibga soling.'})[view];$('#sidebar').classList.remove('open');if(view==='transactions')loadTransactions(1);};
   async function loadData(){const [accounts,categories,transactions,user]=await Promise.all([request('/accounts/'),request('/categories/'),request('/transactions/?page_size=100'),request('/profile/')]);state.accounts=accounts;state.categories=categories;state.transactions=Array.isArray(transactions)?transactions:(transactions.results||[]);state.user=user;renderAll();}

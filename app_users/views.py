@@ -111,10 +111,6 @@ class ResendOTPView(APIView):
         )
 
 
-
-
-
-
 class AccountListAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -222,6 +218,8 @@ class CategoryDeleteAPIView(APIView):
         OpenApiParameter(name='end_date', description="Tugash sanasi (YYYY-MM-DD)", required=False, type=str),
     ]
 )
+
+
 class TransactionListAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
