@@ -15,8 +15,11 @@ SECRET_KEY = 'django-insecure-2b-*wxx1l8&dlz(ahz+-x)3u6ej!qvfg!s!&@%*7^*a6-%1cmm
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = [
+    "kissaapp.onrender.com",
+    "localhost",
+    "127.0.0.1",
+]
 
 # Application definition
 
