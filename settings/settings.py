@@ -13,7 +13,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-2b-*wxx1l8&dlz(ahz+-x)3u6ej!qvfg!s!&@%*7^*a6-%1cmm'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     "kissaapp.onrender.com",
