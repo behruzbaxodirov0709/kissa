@@ -98,6 +98,30 @@
         'Tranzaksiyani tahrirlash':'Edit transaction','O‘zgarishlarni saqlash':'Save changes'
     }
   };
+  const placeholderDictionaries = {
+    uz: {
+      first_name: 'Ismingiz',
+      last_name: 'Familiyangiz',
+      username: 'Foydalanuvchi nomi',
+      password: 'Kamida 8 belgi',
+      confirm_password: 'Parolni takrorlang'
+    },
+    ru: {
+      first_name: 'Ваше имя',
+      last_name: 'Ваша фамилия',
+      username: 'Имя пользователя',
+      password: 'Не менее 8 символов',
+      confirm_password: 'Повторите пароль'
+    },
+    en: {
+      first_name: 'Your first name',
+      last_name: 'Your last name',
+      username: 'Username',
+      password: 'At least 8 characters',
+      confirm_password: 'Confirm password'
+    }
+  };
+
   let current = 'uz';
   const originalText = new WeakMap();
   const originalAttrs = new WeakMap();
@@ -135,6 +159,12 @@
         if (element.getAttribute(attribute) !== translated) element.setAttribute(attribute, translated);
       });
     });
+    root.querySelectorAll?.('[data-i18n-placeholder]').forEach(element => {
+      const key = element.dataset.i18nPlaceholder;
+      const translated = placeholderDictionaries[current]?.[key];
+      if (translated) element.setAttribute('placeholder', translated);
+    });
+
     document.documentElement.lang = current;
   }
 
