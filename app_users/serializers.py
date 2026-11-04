@@ -44,20 +44,21 @@ class RegisterSerializer(serializers.ModelSerializer):
     
     def validate_email(self, email):
         pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        if not re.match(pattern=pattern, string=email):
+        
+        if not re.match(pattern, email):
+            raise serializers.ValidationError("Email formati noto'g'ri!")
+
+        exists = CustomUser.objects.filter(
+            email__iexact=email
+        ).exists()
+
+        print("REGISTRATION EMAIL EXISTS:", exists)
+
+        if exists:
             raise serializers.ValidationError(
-                detail={
-                    "message":"Email to'g'ri formatda emas!"
-                }
+                "Ushbu email allaqachon ro'yxatdan o'tgan!"
             )
 
-        if CustomUser.objects.filter(email=email).exists():
-            raise serializers.ValidationError(
-                detail={
-                    "message":"Ushbu email allaqachon ro'yxatdan o'tgan!"
-                }
-            )
-        
         return email
 
 

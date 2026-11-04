@@ -16,7 +16,7 @@ class CustomUser(AbstractUser):
     )
     
 
-    email = models.EmailField(unique=True)
+    email = models.EmailField(validators=[])
     is_verified = models.BooleanField(default=False)
     language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES, default="uz")
 
