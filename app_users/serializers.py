@@ -52,8 +52,6 @@ class RegisterSerializer(serializers.ModelSerializer):
             email__iexact=email
         ).exists()
 
-        print("REGISTRATION EMAIL EXISTS:", exists)
-
         if exists:
             raise serializers.ValidationError(
                 "Ushbu email allaqachon ro'yxatdan o'tgan!"
