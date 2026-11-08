@@ -85,12 +85,12 @@ WSGI_APPLICATION = 'settings.wsgi.application'
 
 DATABASES = {
     "default": {
-        "ENGINE": os.environ.get("DB_ENGINE"),         # The backend engine
+        "ENGINE": os.environ.get("DB_ENGINE", "django.db.backends.postgresql"),         # The backend engine
         "NAME": os.environ.get("DB_NAME"),               # Name of the database you created
         "USER": os.environ.get("DB_USER"),               # Database username
         "PASSWORD": os.environ.get("DB_PASSWORD"),         # Database password
         "HOST": os.environ.get("DB_HOST"),                         # Or your remote database host IP/endpoint
-        "PORT": os.environ.get("DB_PORT"),
+        "PORT": os.environ.get("DB_PORT", "15461"),
         "OPTIONS": {
             "sslmode": "require",
         },
