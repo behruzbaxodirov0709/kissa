@@ -82,13 +82,20 @@ WSGI_APPLICATION = 'settings.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
 
-DATABASES = {
-'default': {
-    'ENGINE': 'django.db.backends.sqlite3',
-    'NAME': BASE_DIR / 'db.sqlite3',
-}
-}
 
+DATABASES = {
+    "default": {
+        "ENGINE": os.environ.get("DB_ENGINE"),         # The backend engine
+        "NAME": os.environ.get("DB_NAME"),               # Name of the database you created
+        "USER": os.environ.get("DB_USER"),               # Database username
+        "PASSWORD": os.environ.get("DB_PASSWORD"),         # Database password
+        "HOST": os.environ.get("DB_HOST"),                         # Or your remote database host IP/endpoint
+        "PORT": os.environ.get("DB_PORT"),
+        "OPTIONS": {
+            "sslmode": "require",
+        },
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/6.1/ref/settings/#auth-password-validators
