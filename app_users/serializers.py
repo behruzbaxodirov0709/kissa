@@ -320,7 +320,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if not confirmation_code.is_valid():
             raise serializers.ValidationError({"code": "Kodni amal qilish muddati tugagan!"})
 
-        if new_password == old_password:
+        if check_password(password=new_password, encoded=old_password):
             raise serializers.ValidationError({"new_password":"Yangi parol eskisi bilan bir xil bo'lmasligi lozim"})
 
         if new_password and confirm_password and new_password != confirm_password:
