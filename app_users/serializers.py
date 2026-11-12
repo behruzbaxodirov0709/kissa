@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from django.contrib.auth import get_user_model, authenticate
 from .models import CustomUser, EmailConfirmationCode, Account, Category, Transaction
+from django.contrib.auth.hashers import check_password
 
 
 
@@ -311,12 +312,16 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError({"email": "Foydalanuvchi topilmadi!"})
 
         confirmation_code = EmailConfirmationCode.objects.filter(user=user, code=code, is_used=False).last()
+        old_password = user.get("password")
 
         if not confirmation_code:
             raise serializers.ValidationError({"code": "Kiritilgan kod noto'g'ri yoki allaqachon ishlatilgan!"})
 
         if not confirmation_code.is_valid():
             raise serializers.ValidationError({"code": "Kodni amal qilish muddati tugagan!"})
+
+        if new_password == old_password:
+            raise serializers.ValidationError({"new_password":"Yangi parol eskisi bilan bir xil bo'lmasligi lozim"})
 
         if new_password and confirm_password and new_password != confirm_password:
             raise serializers.ValidationError({"confirm_password": "Yangi parollar bir-biriga mos kelmadi!"})
