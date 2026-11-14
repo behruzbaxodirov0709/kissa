@@ -312,7 +312,7 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
             raise serializers.ValidationError({"email": "Foydalanuvchi topilmadi!"})
 
         confirmation_code = EmailConfirmationCode.objects.filter(user=user, code=code, is_used=False).last()
-        old_password = user.get("password")
+        old_password = user.password
 
         if not confirmation_code:
             raise serializers.ValidationError({"code": "Kiritilgan kod noto'g'ri yoki allaqachon ishlatilgan!"})
